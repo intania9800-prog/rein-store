@@ -1,0 +1,6 @@
+{
+  "name": "Reinstore - Top Up, Pulsa, Token Listrik & Layanan Digital Terpercaya",
+  "description": "Platform Top Up Game, Pulsa, Token Listrik, Web Monitor Treasury, DNS AdGuard, dan Gestun PayLater dengan sistem QRIS otomatis dan verifikasi kilat.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

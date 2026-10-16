@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="gestunBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#9333EA"/>
+      <stop offset="100%" stop-color="#C026D3"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="100" fill="url(#gestunBg)"/>
+  <!-- Wallet / Card Icon with G -->
+  <rect x="100" y="140" width="312" height="232" rx="40" fill="#FFFFFF" fill-opacity="0.15" stroke="#FFFFFF" stroke-width="14"/>
+  <rect x="260" y="210" width="160" height="90" rx="20" fill="#FFFFFF" stroke="#C026D3" stroke-width="10"/>
+  <circle cx="300" cy="255" r="18" fill="#C026D3"/>
+  <text x="210" y="285" fill="#FFFFFF" font-size="110" font-weight="900" font-family="Arial Black, sans-serif">G</text>
+</svg>
