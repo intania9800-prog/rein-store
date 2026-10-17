@@ -211,6 +211,9 @@ export function saveBankAccounts(accounts: BankAccount[]): void {
     const sorted = [...accounts].sort((a, b) => a.order - b.order);
     localStorage.setItem(STORAGE_KEY_BANK_ACCOUNTS, JSON.stringify(sorted));
     window.dispatchEvent(new CustomEvent(EVENT_BANK_ACCOUNTS_UPDATED, { detail: sorted }));
+    import('./syncManager').then(({ pushSyncUpdate }) => {
+      pushSyncUpdate('banks', sorted);
+    }).catch(() => {});
   } catch (err) {
     console.error('Failed to save bank accounts:', err);
   }

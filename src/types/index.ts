@@ -23,6 +23,7 @@ export interface Product {
   minPrice: number;
   maxPrice: number;
   iconType: string;
+  customLogoUrl?: string;
   badge?: string;
   inputPlaceholder?: string;
   inputLabel?: string;

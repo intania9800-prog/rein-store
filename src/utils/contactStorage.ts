@@ -87,6 +87,9 @@ export function saveCSConfig(config: ContactCSConfig): void {
   try {
     localStorage.setItem(STORAGE_KEY_CS_CONFIG, JSON.stringify(config));
     window.dispatchEvent(new CustomEvent(EVENT_CS_CONTACTS_UPDATED, { detail: config }));
+    import('./syncManager').then(({ pushSyncUpdate }) => {
+      pushSyncUpdate('contacts', config);
+    }).catch(() => {});
 
     // Sync to QRIS config confirmation number
     try {

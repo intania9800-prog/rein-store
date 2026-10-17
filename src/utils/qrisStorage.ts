@@ -25,6 +25,7 @@ export const DEFAULT_QRIS_CONFIG: QRISConfig = {
 
 export const STORAGE_KEY_QRIS_CONFIG = 'reinstore_qris_config_v1';
 export const STORAGE_KEY_QRIS_IMAGE_IDB = 'reinstore_qris_image_blob';
+export const EVENT_QRIS_UPDATED = 'reinstore_qris_updated';
 
 const DB_NAME = 'ReinstoreQRISDB';
 const STORE_NAME = 'qris_store';
@@ -132,6 +133,9 @@ export function saveQRISConfig(config: QRISConfig): void {
   try {
     localStorage.setItem(STORAGE_KEY_QRIS_CONFIG, JSON.stringify(config));
     window.dispatchEvent(new CustomEvent('reinstore_qris_updated', { detail: config }));
+    import('./syncManager').then(({ pushSyncUpdate }) => {
+      pushSyncUpdate('qris', config);
+    }).catch(() => {});
   } catch (e) {
     console.error('Failed to save QRIS config:', e);
   }

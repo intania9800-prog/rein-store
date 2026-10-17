@@ -21,7 +21,7 @@ import {
   GestunLogo,
   XLLogo,
   IndosatLogo,
-  TriLogo,
+  ProductBrandIcon,
 } from './icons/BrandLogos';
 
 interface MainCatalogProps {
@@ -35,38 +35,15 @@ export const MainCatalog: React.FC<MainCatalogProps> = ({
   onSelectProduct,
   onFilterCategory,
 }) => {
-  // Render Logo based on iconType
-  const renderProductLogo = (iconType: string) => {
-    switch (iconType) {
-      case 'mlbb':
-        return <MLBBLogo className="w-14 h-14" />;
-      case 'freefire':
-        return <FreeFireLogo className="w-14 h-14" />;
-      case 'pubg':
-        return <PUBGLogo className="w-14 h-14" />;
-      case 'genshin':
-        return <GenshinLogo className="w-14 h-14" />;
-      case 'pointblank':
-        return <PointBlankLogo className="w-14 h-14" />;
-      case 'telkomsel':
-        return <TelkomselLogo className="w-14 h-14" />;
-      case 'pln':
-        return <PLNLogo className="w-14 h-14" />;
-      case 'treasury':
-        return <TreasuryLogo className="w-14 h-14" />;
-      case 'adguard':
-        return <AdGuardLogo className="w-14 h-14" />;
-      case 'gestun':
-        return <GestunLogo className="w-14 h-14" />;
-      case 'xl':
-        return <XLLogo className="w-14 h-14" />;
-      case 'indosat':
-        return <IndosatLogo className="w-14 h-14" />;
-      case 'tri':
-        return <TriLogo className="w-14 h-14" />;
-      default:
-        return <Gamepad2 className="w-14 h-14 text-blue-400" />;
-    }
+  // Render Logo based on iconType or customLogoUrl
+  const renderProductLogo = (product: Product) => {
+    return (
+      <ProductBrandIcon
+        type={product.iconType}
+        customLogoUrl={product.customLogoUrl}
+        className="w-14 h-14"
+      />
+    );
   };
 
   return (
@@ -193,7 +170,7 @@ export const MainCatalog: React.FC<MainCatalogProps> = ({
                 {/* Logo & Badge */}
                 <div className="flex items-start justify-between mb-3">
                   <div className="shrink-0 transition-transform group-hover:scale-105">
-                    {renderProductLogo(product.iconType)}
+                    {renderProductLogo(product)}
                   </div>
                   {product.badge && (
                     <span className="text-[9px] font-bold text-[#00A3FF] bg-blue-950/60 border border-blue-500/30 px-2 py-0.5 rounded-full">

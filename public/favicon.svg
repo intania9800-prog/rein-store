@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <rect width="128" height="128" rx="28" fill="#060a16"/>
+  <!-- Subtle dark inner border for crisp contrast on light/dark browser tabs -->
+  <rect x="1" y="1" width="126" height="126" rx="27" stroke="#1e293b" stroke-width="2"/>
+  
+  <!-- Main white 'R' letterform -->
+  <path
+    d="M44 26H80C93 26 103 35.5 103 48C103 57.5 95.5 65 85.5 67.5L107 98H85L67 71H56V98H42V26H44ZM56 41V57H78C82.5 57 87.5 54 87.5 49C87.5 44 82.5 41 78 41H56Z"
+    fill="#FFFFFF"
+  />
+
+  <!-- Top Cyan Slash / Stripe -->
+  <polygon points="28,58 54,58 46,67 20,67" fill="#00A3FF"/>
+
+  <!-- Bottom Cyan Slash / Stripe -->
+  <polygon points="22,74 58,74 50,83 14,83" fill="#00A3FF"/>
+</svg>

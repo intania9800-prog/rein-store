@@ -149,6 +149,9 @@ export async function savePostersToStorage(posters: SlidePoster[]): Promise<void
   try {
     window.dispatchEvent(new CustomEvent('reinstore_posters_updated', { detail: safePosters }));
     window.dispatchEvent(new Event('reinstore_posters_updated'));
+    import('./syncManager').then(({ pushSyncUpdate }) => {
+      pushSyncUpdate('posters', safePosters);
+    }).catch(() => {});
   } catch {
     // ignore
   }

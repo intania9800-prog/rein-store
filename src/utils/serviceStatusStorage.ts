@@ -92,6 +92,9 @@ export const saveServiceStatusConfig = (config: ServiceStatusConfig): boolean =>
     };
     localStorage.setItem(STORAGE_KEY_SERVICE_STATUS, JSON.stringify(updated));
     window.dispatchEvent(new CustomEvent(EVENT_SERVICE_STATUS_UPDATED, { detail: updated }));
+    import('./syncManager').then(({ pushSyncUpdate }) => {
+      pushSyncUpdate('serviceStatuses', updated);
+    }).catch(() => {});
     return true;
   } catch (err) {
     console.error('Error saving service status config:', err);

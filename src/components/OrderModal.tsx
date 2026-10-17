@@ -32,6 +32,7 @@ import {
   ADMIN_WHATSAPP_SUPPORT,
 } from '../data/products';
 import {
+  ProductBrandIcon,
   UniversalBankLogo,
   BCALogo,
   SeaBankLogo,
@@ -312,8 +313,8 @@ export const OrderModal: React.FC<OrderModalProps> = ({
         {/* Modal Header */}
         <div className="p-4 sm:p-6 border-b border-slate-800 flex items-center justify-between bg-[#0c152e]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-[#00A3FF]">
-              <CreditCard className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 overflow-hidden p-1">
+              <ProductBrandIcon type={product.iconType} customLogoUrl={product.customLogoUrl} className="w-8 h-8 object-contain" />
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
@@ -714,14 +715,25 @@ export const OrderModal: React.FC<OrderModalProps> = ({
             </span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">
-                  Email (Invoice Resmi Otomatis)
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-slate-300">
+                    Email / Gmail <span className="text-cyan-400">*</span>
+                  </label>
+                  {currentUser?.email ? (
+                    <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.2 rounded-full">
+                      ✓ Akun Terhubung
+                    </span>
+                  ) : customerEmail.toLowerCase().includes('@gmail.com') ? (
+                    <span className="text-[10px] text-cyan-300 font-bold bg-cyan-500/15 border border-cyan-500/30 px-2 py-0.2 rounded-full">
+                      ✓ Gmail Terdeteksi
+                    </span>
+                  ) : null}
+                </div>
                 <input
                   type="email"
                   value={customerEmail}
                   onChange={(e) => setCustomerEmail(e.target.value)}
-                  placeholder="Contoh: user@gmail.com"
+                  placeholder="Contoh: namaanda@gmail.com"
                   className="w-full bg-[#0c152e] border border-slate-700 text-white rounded-xl px-3.5 py-2.5 text-xs focus:border-[#00A3FF] focus:outline-none"
                   required
                 />
@@ -729,7 +741,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
 
               <div>
                 <label className="text-xs font-semibold text-slate-300 block mb-1">
-                  Nomor WhatsApp (Notifikasi Real-Time)
+                  Nomor WhatsApp (Notifikasi Real-Time) <span className="text-cyan-400">*</span>
                 </label>
                 <input
                   type="tel"
@@ -741,8 +753,9 @@ export const OrderModal: React.FC<OrderModalProps> = ({
                 />
               </div>
             </div>
-            <p className="text-[10px] text-slate-400 mt-1.5">
-              📧 Invoice otomatis dikirimkan ke email dan notifikasi status real-time via WhatsApp setelah pembayaran terverifikasi.
+            <p className="text-[10px] text-slate-400 mt-1.5 flex items-center gap-1.5">
+              <span className="text-cyan-400 font-bold">📧 Invoice Resmi Otomatis:</span>
+              <span>Akan langsung dikirimkan ke kotak masuk Gmail Anda setelah pembayaran berhasil diverifikasi.</span>
             </p>
           </div>
 

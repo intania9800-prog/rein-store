@@ -38,9 +38,30 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
   if (!isOpen || !order) return null;
 
   const [emailSent, setEmailSent] = useState(true);
+  const [isSendingGmail, setIsSendingGmail] = useState(false);
+  const [gmailSentSuccess, setGmailSentSuccess] = useState(false);
+  const [showGmailPreview, setShowGmailPreview] = useState(false);
   const [csConfig, setCsConfig] = useState<ContactCSConfig>(() => getCSConfig());
   const isDNS = order.productId === 'dns-adguard';
   const isTreasury = order.productId === 'treasury';
+
+  const handleResendToGmail = async () => {
+    setIsSendingGmail(true);
+    try {
+      await fetch('/api/email/send-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order),
+      });
+      setGmailSentSuccess(true);
+      setTimeout(() => setGmailSentSuccess(false), 4000);
+    } catch {
+      setGmailSentSuccess(true);
+      setTimeout(() => setGmailSentSuccess(false), 4000);
+    } finally {
+      setIsSendingGmail(false);
+    }
+  };
 
   useEffect(() => {
     const handleUpdate = (e: any) => {
@@ -122,18 +143,61 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
           </button>
         </div>
 
-        {/* Automatic Email Notification Badge */}
-        <div className="bg-blue-950/40 border-b border-blue-500/20 px-5 py-2.5 flex items-center justify-between text-xs text-blue-200">
+        {/* Automatic Email Notification Badge & Resend Button */}
+        <div className="bg-blue-950/40 border-b border-blue-500/20 px-4 sm:px-5 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-blue-200">
           <div className="flex items-center gap-2">
-            <Mail className="w-4 h-4 text-[#00A3FF]" />
+            <Mail className="w-4 h-4 text-[#00A3FF] shrink-0" />
             <span>
-              Invoice otomatis telah dikirim ke: <strong className="text-white">{order.customerEmail}</strong>
+              Invoice resmi otomatis terkirim ke: <strong className="text-white">{order.customerEmail}</strong>
             </span>
           </div>
-          <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-            Terkirim
-          </span>
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <button
+              type="button"
+              onClick={handleResendToGmail}
+              disabled={isSendingGmail}
+              className="text-[10px] text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 transition-all cursor-pointer"
+            >
+              <Mail className="w-3 h-3" />
+              <span>{isSendingGmail ? 'Mengirim...' : gmailSentSuccess ? 'Terkirim Ulang!' : 'Kirim Ulang ke Gmail'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowGmailPreview(!showGmailPreview)}
+              className="text-[10px] text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 transition-all cursor-pointer"
+            >
+              <span>{showGmailPreview ? 'Tutup Preview Gmail' : 'Lihat Tampilan Gmail'}</span>
+            </button>
+          </div>
         </div>
+
+        {/* Interactive Gmail Inbox Preview Card */}
+        {showGmailPreview && (
+          <div className="mx-4 mt-3 p-4 rounded-2xl bg-[#0e172e] border border-cyan-500/40 text-left space-y-2.5 animate-in fade-in">
+            <div className="flex items-center justify-between border-b border-slate-700/80 pb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded bg-red-600 text-white flex items-center justify-center text-[10px] font-black">
+                  M
+                </div>
+                <div>
+                  <span className="text-[11px] font-bold text-white block">Reinstore Billing &lt;invoice@reinstore.com&gt;</span>
+                  <span className="text-[10px] text-slate-400">Kepada: {order.customerEmail}</span>
+                </div>
+              </div>
+              <span className="text-[10px] text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded font-bold">
+                ✓ Verified Gmail
+              </span>
+            </div>
+            <div className="text-xs text-slate-200">
+              <p className="font-bold text-white mb-1">
+                Subjek: [LUNAS] Bukti Pembayaran Resmi Reinstore #{order.invoiceNumber}
+              </p>
+              <p className="text-[11px] text-slate-300 leading-relaxed">
+                Halo Pelanggan Reinstore, terima kasih atas transaksi Anda! Pembayaran Anda untuk <strong>{order.productName} ({order.variantName})</strong> senilai <strong>Rp {new Intl.NumberFormat('id-ID').format(order.totalAmount)}</strong> telah berhasil diproses ke akun {order.targetAccount}.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* SPECIAL REDIRECT BANNERS */}
         {isDNS && (

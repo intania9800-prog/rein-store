@@ -361,6 +361,9 @@ export function saveReinstoreContent(newContent: ReinstoreContent): void {
   try {
     localStorage.setItem(STORAGE_KEY_CONTENT, JSON.stringify(newContent));
     window.dispatchEvent(new CustomEvent(EVENT_CONTENT_UPDATED, { detail: newContent }));
+    import('./syncManager').then(({ pushSyncUpdate }) => {
+      pushSyncUpdate('content', newContent);
+    }).catch(() => {});
   } catch (err) {
     console.error('Failed to save reinstore content to storage:', err);
   }

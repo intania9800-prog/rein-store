@@ -5,6 +5,7 @@
 
 import { Product, ProductVariant } from '../types';
 import { PRODUCTS } from '../data/products';
+import { pushSyncUpdate } from './syncManager';
 
 export const STORAGE_KEY_PRODUCTS = 'reinstore_products_v1';
 export const EVENT_PRODUCTS_UPDATED = 'reinstore_products_updated';
@@ -51,13 +52,14 @@ export function getStoredProducts(): Product[] {
 }
 
 /**
- * Save products to localStorage and dispatch update event
+ * Save products to localStorage, dispatch update event, and push cross-device sync
  */
 export function saveStoredProducts(products: Product[]): void {
   try {
     const updated = products.map((p) => recalculateProductPricing(p));
     localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(updated));
     window.dispatchEvent(new CustomEvent(EVENT_PRODUCTS_UPDATED, { detail: updated }));
+    pushSyncUpdate('products', updated);
   } catch (err) {
     console.error('Failed to save products:', err);
   }
@@ -147,9 +149,46 @@ export function bulkAdjustPrices(
 }
 
 /**
+ * Add a completely new product to the catalog
+ */
+export function addProduct(newProduct: Product): Product[] {
+  const current = getStoredProducts();
+  // Ensure pricing is calculated
+  const processed = recalculateProductPricing(newProduct);
+  const updated = [processed, ...current];
+  saveStoredProducts(updated);
+  return updated;
+}
+
+/**
+ * Delete a product completely from the store catalog
+ */
+export function deleteProduct(productId: string): Product[] {
+  const current = getStoredProducts();
+  const updated = current.filter((p) => p.id !== productId);
+  saveStoredProducts(updated);
+  return updated;
+}
+
+/**
+ * Update product top-level information (name, logo, category, description, badge, etc.)
+ */
+export function updateProduct(productId: string, updates: Partial<Product>): Product[] {
+  const current = getStoredProducts();
+  const updated = current.map((p) => {
+    if (p.id !== productId) return p;
+    const merged = { ...p, ...updates };
+    return recalculateProductPricing(merged);
+  });
+  saveStoredProducts(updated);
+  return updated;
+}
+
+/**
  * Reset all product prices to standard defaults
  */
 export function resetStoredProducts(): Product[] {
   saveStoredProducts(PRODUCTS);
   return PRODUCTS;
 }
+

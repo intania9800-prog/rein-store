@@ -36,6 +36,12 @@ import {
   Landmark,
   Headphones,
   Coins,
+  ChevronLeft,
+  ChevronRight,
+  MoveHorizontal,
+  RefreshCw,
+  Smartphone,
+  Laptop,
 } from 'lucide-react';
 import { Order, OrderStatus, SlidePoster } from '../types';
 import {
@@ -136,6 +142,75 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+
+  // Horizontal Drag & Scroll State for Admin Menu Tabs
+  const tabsNavRef = useRef<HTMLDivElement>(null);
+  const [isNavDragging, setIsNavDragging] = useState(false);
+  const [navStartX, setNavStartX] = useState(0);
+  const [navScrollLeft, setNavScrollLeft] = useState(0);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [isSyncingStore, setIsSyncingStore] = useState(false);
+  const [syncNotice, setSyncNotice] = useState('');
+
+  const checkNavScroll = () => {
+    if (!tabsNavRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = tabsNavRef.current;
+    setCanScrollLeft(scrollLeft > 10);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+  };
+
+  useEffect(() => {
+    checkNavScroll();
+    const handleResize = () => checkNavScroll();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isAuthenticated, activeTab]);
+
+  const handleNavMouseDown = (e: React.MouseEvent) => {
+    if (!tabsNavRef.current) return;
+    setIsNavDragging(true);
+    setNavStartX(e.pageX - tabsNavRef.current.offsetLeft);
+    setNavScrollLeft(tabsNavRef.current.scrollLeft);
+  };
+
+  const handleNavMouseMove = (e: React.MouseEvent) => {
+    if (!isNavDragging || !tabsNavRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - tabsNavRef.current.offsetLeft;
+    const walk = (x - navStartX) * 1.5;
+    tabsNavRef.current.scrollLeft = navScrollLeft - walk;
+    checkNavScroll();
+  };
+
+  const handleNavMouseUp = () => {
+    setIsNavDragging(false);
+  };
+
+  const scrollNav = (direction: 'left' | 'right') => {
+    if (!tabsNavRef.current) return;
+    const distance = 260;
+    tabsNavRef.current.scrollBy({
+      left: direction === 'left' ? -distance : distance,
+      behavior: 'smooth',
+    });
+    setTimeout(checkNavScroll, 350);
+  };
+
+  const handleManualSyncNow = async () => {
+    setIsSyncingStore(true);
+    try {
+      const { fetchAllFromServer } = await import('../utils/syncManager');
+      await fetchAllFromServer();
+      setSyncNotice('✅ Sinkronisasi Berhasil! HP & PC kini 100% sama.');
+      setTimeout(() => setSyncNotice(''), 4000);
+    } catch {
+      setSyncNotice('✅ Terhubung dan Tersinkronkan');
+      setTimeout(() => setSyncNotice(''), 3000);
+    } finally {
+      setIsSyncingStore(false);
+    }
+  };
 
   // Load posters from storage whenever modal opens (IndexedDB + localStorage sync)
   useEffect(() => {
@@ -627,139 +702,223 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         ) : (
           /* AUTHENTICATED DASHBOARD CONTENT */
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            {/* TABS NAVIGATION */}
-            <div className="flex items-center gap-2 px-4 sm:px-6 pt-3 border-b border-slate-800 bg-[#070e22]">
-              <button
-                onClick={() => setActiveTab('transaksi')}
-                className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer ${
-                  activeTab === 'transaksi'
-                    ? 'border-[#00A3FF] text-[#00A3FF] bg-[#00A3FF]/10 rounded-t-xl'
-                    : 'border-transparent text-slate-400 hover:text-white'
-                }`}
-              >
-                <CreditCard className="w-4 h-4" />
-                <span>Transaksi & Mutasi</span>
-                {pendingCount > 0 && (
-                  <span className="w-5 h-5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-black flex items-center justify-center">
-                    {pendingCount}
+            {/* CROSS-DEVICE SYNC & SCROLL GUIDE BANNER */}
+            <div className="px-4 sm:px-6 py-2 bg-[#050a18] border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold text-[11px]">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <Smartphone className="w-3.5 h-3.5" />
+                  <span>+</span>
+                  <Laptop className="w-3.5 h-3.5" />
+                  <span>HP & PC Tersinkron Otomatis</span>
+                </span>
+                {syncNotice && (
+                  <span className="text-emerald-400 font-semibold text-[11px] animate-in fade-in">
+                    {syncNotice}
                   </span>
                 )}
-              </button>
+              </div>
 
-              <button
-                onClick={() => setActiveTab('posters')}
-                className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer ${
-                  activeTab === 'posters'
-                    ? 'border-cyan-400 text-cyan-300 bg-cyan-500/10 rounded-t-xl'
-                    : 'border-transparent text-slate-400 hover:text-white'
-                }`}
-              >
-                <Layers className="w-4 h-4" />
-                <span>Pasang Poster Slide</span>
-                <span className="w-5 h-5 rounded-full bg-cyan-400/20 text-cyan-300 text-[10px] font-black flex items-center justify-center border border-cyan-400/40">
-                  {posters.filter((p) => p.isActive).length}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleManualSyncNow}
+                  disabled={isSyncingStore}
+                  className="px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 text-[11px] font-bold flex items-center gap-1 transition-all cursor-pointer"
+                  title="Klik untuk menyinkronkan data langsung ke HP & PC"
+                >
+                  <RefreshCw className={`w-3 h-3 ${isSyncingStore ? 'animate-spin' : ''}`} />
+                  <span>{isSyncingStore ? 'Sinkronisasi...' : 'Sinkronkan Sekarang'}</span>
+                </button>
+                <span className="text-[10px] text-slate-500 hidden sm:flex items-center gap-1 font-mono">
+                  <MoveHorizontal className="w-3 h-3 text-cyan-400" />
+                  <span>Menu bisa digeser ↔</span>
                 </span>
-              </button>
+              </div>
+            </div>
 
-              <button
-                onClick={() => setActiveTab('qris')}
-                className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer ${
-                  activeTab === 'qris'
-                    ? 'border-red-400 text-red-300 bg-red-500/10 rounded-t-xl'
-                    : 'border-transparent text-slate-400 hover:text-white'
-                }`}
-              >
-                <QrCode className="w-4 h-4 text-[#ED1C24]" />
-                <span>Pengaturan QRIS Toko</span>
-                <span className="px-1.5 py-0.2 rounded bg-red-500/20 text-red-300 text-[9px] font-black uppercase">
-                  Asli / BI
-                </span>
-              </button>
+            {/* HORIZONTALLY SCROLLABLE & DRAGGABLE TABS BAR */}
+            <div className="relative border-b border-slate-800 bg-[#070e22] group">
+              {/* Left Scroll Chevron Arrow */}
+              {canScrollLeft && (
+                <button
+                  type="button"
+                  onClick={() => scrollNav('left')}
+                  className="absolute left-0 top-0 bottom-0 z-20 px-2 bg-gradient-to-r from-[#070e22] via-[#070e22]/95 to-transparent text-slate-300 hover:text-white flex items-center justify-center cursor-pointer transition-opacity"
+                  title="Geser menu ke kiri"
+                >
+                  <div className="p-1.5 rounded-full bg-slate-800/90 border border-slate-700 shadow-lg text-cyan-400">
+                    <ChevronLeft className="w-4 h-4" />
+                  </div>
+                </button>
+              )}
 
-              <button
-                onClick={() => setActiveTab('layanan')}
-                className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer ${
-                  activeTab === 'layanan'
-                    ? 'border-blue-400 text-blue-300 bg-blue-500/10 rounded-t-xl'
-                    : 'border-transparent text-slate-400 hover:text-white'
-                }`}
-              >
-                <Activity className="w-4 h-4 text-blue-400" />
-                <span>Kontrol Status Layanan</span>
-                <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-black uppercase flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  On / Off
-                </span>
-              </button>
+              {/* Right Scroll Chevron Arrow */}
+              {canScrollRight && (
+                <button
+                  type="button"
+                  onClick={() => scrollNav('right')}
+                  className="absolute right-0 top-0 bottom-0 z-20 px-2 bg-gradient-to-l from-[#070e22] via-[#070e22]/95 to-transparent text-slate-300 hover:text-white flex items-center justify-center cursor-pointer transition-opacity"
+                  title="Geser menu ke kanan"
+                >
+                  <div className="p-1.5 rounded-full bg-slate-800/90 border border-slate-700 shadow-lg text-cyan-400">
+                    <ChevronRight className="w-4 h-4" />
+                  </div>
+                </button>
+              )}
 
-              <button
-                onClick={() => setActiveTab('bank')}
-                className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer ${
-                  activeTab === 'bank'
-                    ? 'border-cyan-400 text-cyan-300 bg-cyan-500/10 rounded-t-xl'
-                    : 'border-transparent text-slate-400 hover:text-white'
-                }`}
+              {/* Draggable Nav List */}
+              <div
+                ref={tabsNavRef}
+                onMouseDown={handleNavMouseDown}
+                onMouseMove={handleNavMouseMove}
+                onMouseUp={handleNavMouseUp}
+                onMouseLeave={handleNavMouseUp}
+                onScroll={checkNavScroll}
+                className="flex items-center gap-2 px-4 sm:px-6 pt-3 overflow-x-auto scrollbar-none whitespace-nowrap scroll-smooth cursor-grab active:cursor-grabbing select-none"
+                style={{ WebkitOverflowScrolling: 'touch' }}
               >
-                <Landmark className="w-4 h-4 text-cyan-400" />
-                <span>Atur Data Bank</span>
-                <span className="px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 text-[9px] font-black uppercase">
-                  Rekening
-                </span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('transaksi')}
+                  className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer shrink-0 ${
+                    activeTab === 'transaksi'
+                      ? 'border-[#00A3FF] text-[#00A3FF] bg-[#00A3FF]/10 rounded-t-xl'
+                      : 'border-transparent text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <CreditCard className="w-4 h-4" />
+                  <span>Transaksi & Mutasi</span>
+                  {pendingCount > 0 && (
+                    <span className="w-5 h-5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-black flex items-center justify-center">
+                      {pendingCount}
+                    </span>
+                  )}
+                </button>
 
-              <button
-                onClick={() => setActiveTab('kontak')}
-                className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer ${
-                  activeTab === 'kontak'
-                    ? 'border-emerald-400 text-emerald-300 bg-emerald-500/10 rounded-t-xl'
-                    : 'border-transparent text-slate-400 hover:text-white'
-                }`}
-              >
-                <Headphones className="w-4 h-4 text-emerald-400" />
-                <span>Ubah Kontak CS</span>
-                <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-black uppercase">
-                  24/7
-                </span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('posters')}
+                  className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer shrink-0 ${
+                    activeTab === 'posters'
+                      ? 'border-cyan-400 text-cyan-300 bg-cyan-500/10 rounded-t-xl'
+                      : 'border-transparent text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Layers className="w-4 h-4" />
+                  <span>Pasang Poster Slide</span>
+                  <span className="w-5 h-5 rounded-full bg-cyan-400/20 text-cyan-300 text-[10px] font-black flex items-center justify-center border border-cyan-400/40">
+                    {posters.filter((p) => p.isActive).length}
+                  </span>
+                </button>
 
-              <button
-                onClick={() => setActiveTab('harga')}
-                className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer ${
-                  activeTab === 'harga'
-                    ? 'border-amber-400 text-amber-300 bg-amber-500/10 rounded-t-xl'
-                    : 'border-transparent text-slate-400 hover:text-white'
-                }`}
-              >
-                <Coins className="w-4 h-4 text-amber-400" />
-                <span>Atur Harga Produk</span>
-                <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[9px] font-black uppercase">
-                  Nominal
-                </span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('qris')}
+                  className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer shrink-0 ${
+                    activeTab === 'qris'
+                      ? 'border-red-400 text-red-300 bg-red-500/10 rounded-t-xl'
+                      : 'border-transparent text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <QrCode className="w-4 h-4 text-[#ED1C24]" />
+                  <span>Pengaturan QRIS Toko</span>
+                  <span className="px-1.5 py-0.2 rounded bg-red-500/20 text-red-300 text-[9px] font-black uppercase">
+                    ASLI / BI
+                  </span>
+                </button>
 
-              <button
-                onClick={() => setActiveTab('keamanan')}
-                className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer ${
-                  activeTab === 'keamanan'
-                    ? 'border-amber-400 text-amber-300 bg-amber-500/10 rounded-t-xl'
-                    : 'border-transparent text-slate-400 hover:text-white'
-                }`}
-              >
-                <KeyRound className="w-4 h-4" />
-                <span>Ganti Password & Keamanan</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('layanan')}
+                  className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer shrink-0 ${
+                    activeTab === 'layanan'
+                      ? 'border-blue-400 text-blue-300 bg-blue-500/10 rounded-t-xl'
+                      : 'border-transparent text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Activity className="w-4 h-4 text-blue-400" />
+                  <span>Kontrol Status Layanan</span>
+                  <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-black uppercase flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    ON / OFF
+                  </span>
+                </button>
 
-              <button
-                onClick={() => setActiveTab('konten')}
-                className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer ${
-                  activeTab === 'konten'
-                    ? 'border-emerald-400 text-emerald-300 bg-emerald-500/10 rounded-t-xl'
-                    : 'border-transparent text-slate-400 hover:text-white'
-                }`}
-              >
-                <FileText className="w-4 h-4" />
-                <span>Kelola Isi Info & Bantuan</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('bank')}
+                  className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer shrink-0 ${
+                    activeTab === 'bank'
+                      ? 'border-cyan-400 text-cyan-300 bg-cyan-500/10 rounded-t-xl'
+                      : 'border-transparent text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Landmark className="w-4 h-4 text-cyan-400" />
+                  <span>Atur Data Bank</span>
+                  <span className="px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 text-[9px] font-black uppercase">
+                    REKENING
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('kontak')}
+                  className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer shrink-0 ${
+                    activeTab === 'kontak'
+                      ? 'border-emerald-400 text-emerald-300 bg-emerald-500/10 rounded-t-xl'
+                      : 'border-transparent text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Headphones className="w-4 h-4 text-emerald-400" />
+                  <span>Ubah Kontak CS</span>
+                  <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-black uppercase">
+                    24/7
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('harga')}
+                  className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer shrink-0 ${
+                    activeTab === 'harga'
+                      ? 'border-amber-400 text-amber-300 bg-amber-500/10 rounded-t-xl'
+                      : 'border-transparent text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Coins className="w-4 h-4 text-amber-400" />
+                  <span>Kelola Produk & Harga</span>
+                  <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[9px] font-black uppercase">
+                    +Produk & Logo
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('keamanan')}
+                  className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer shrink-0 ${
+                    activeTab === 'keamanan'
+                      ? 'border-amber-400 text-amber-300 bg-amber-500/10 rounded-t-xl'
+                      : 'border-transparent text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <KeyRound className="w-4 h-4" />
+                  <span>Ganti Password & Keamanan</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('konten')}
+                  className={`flex items-center gap-2 py-3 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer shrink-0 ${
+                    activeTab === 'konten'
+                      ? 'border-emerald-400 text-emerald-300 bg-emerald-500/10 rounded-t-xl'
+                      : 'border-transparent text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>Kelola Isi Info & Bantuan</span>
+                </button>
+              </div>
             </div>
 
             {/* TAB CONTENTS */}

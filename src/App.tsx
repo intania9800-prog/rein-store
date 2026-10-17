@@ -27,6 +27,7 @@ import {
   getStoredProducts,
   EVENT_PRODUCTS_UPDATED,
 } from './utils/productStorage';
+import { initCrossDeviceSync, pushSyncUpdate } from './utils/syncManager';
 
 export default function App() {
   // Navigation & Search State
@@ -65,7 +66,7 @@ export default function App() {
     activeTab: 'tentang',
   });
 
-  // Orders State (Persisted in localStorage)
+  // Orders State (Persisted in localStorage and Synced across devices)
   const [orders, setOrders] = useState<Order[]>(() => {
     try {
       const saved = localStorage.getItem('reinstore_orders');
@@ -75,9 +76,27 @@ export default function App() {
     }
   });
 
+  // Initialize Cross-Device Real-Time Sync (HP <-> PC/Laptop)
+  useEffect(() => {
+    const cleanup = initCrossDeviceSync();
+
+    const handleRemoteOrders = (e: any) => {
+      if (Array.isArray(e.detail)) {
+        setOrders(e.detail);
+      }
+    };
+    window.addEventListener('reinstore_orders_updated', handleRemoteOrders);
+
+    return () => {
+      cleanup();
+      window.removeEventListener('reinstore_orders_updated', handleRemoteOrders);
+    };
+  }, []);
+
   useEffect(() => {
     try {
       localStorage.setItem('reinstore_orders', JSON.stringify(orders));
+      pushSyncUpdate('orders', orders);
     } catch (e) {
       console.error('Failed to save orders to localStorage', e);
     }
@@ -195,6 +214,15 @@ export default function App() {
     setIsOrderModalOpen(false);
     setActiveInvoiceOrder(newOrder);
     setIsInvoiceModalOpen(true);
+
+    // Auto-send official invoice to customer's Gmail
+    if (newOrder.customerEmail) {
+      fetch('/api/email/send-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newOrder),
+      }).catch((e) => console.warn('Could not auto-send Gmail invoice:', e));
+    }
   };
 
   const handleOpenQRIS = (newOrder: Order) => {
@@ -211,6 +239,15 @@ export default function App() {
     setIsQRISModalOpen(false);
     setActiveInvoiceOrder(updatedOrder);
     setIsInvoiceModalOpen(true);
+
+    // Auto-send official invoice to customer's Gmail
+    if (updatedOrder.customerEmail) {
+      fetch('/api/email/send-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedOrder),
+      }).catch((e) => console.warn('Could not auto-send Gmail invoice:', e));
+    }
   };
 
   const handleUpdateOrderStatus = (orderId: string, newStatus: OrderStatus) => {

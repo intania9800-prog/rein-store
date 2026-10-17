@@ -294,10 +294,21 @@ export const UniversalBankLogo: React.FC<{ bankCode?: string; bankName?: string;
 };
 
 // Universal Product Brand Icon helper
-export const ProductBrandIcon: React.FC<{ type: string; className?: string }> = ({
+export const ProductBrandIcon: React.FC<{ type: string; customLogoUrl?: string; className?: string }> = ({
   type,
+  customLogoUrl,
   className = 'w-6 h-6',
 }) => {
+  // If custom logo image URL is provided or type is a data/web image URL
+  const src = customLogoUrl || (type && (type.startsWith('http://') || type.startsWith('https://') || type.startsWith('data:image/') || type.startsWith('/')) ? type : null);
+  if (src) {
+    return (
+      <div className={`relative overflow-hidden rounded-xl bg-slate-900 border border-slate-700/80 p-0.5 flex items-center justify-center shrink-0 ${className}`}>
+        <img src={src} alt="Logo Produk" className="w-full h-full object-contain rounded-lg" />
+      </div>
+    );
+  }
+
   switch (type) {
     case 'mlbb':
       return <MLBBLogo className={className} />;
@@ -325,9 +336,33 @@ export const ProductBrandIcon: React.FC<{ type: string; className?: string }> = 
       return <IndosatLogo className={className} />;
     case 'tri':
       return <TriLogo className={className} />;
+    case 'steam':
+      return (
+        <div className={`relative overflow-hidden rounded-xl bg-[#171a21] border border-blue-900/40 p-1 flex items-center justify-center ${className}`}>
+          <img src="/images/steam.png" alt="Steam" className="w-full h-full object-contain" />
+        </div>
+      );
+    case 'googleplay':
+      return (
+        <div className={`relative overflow-hidden rounded-xl bg-white p-1 flex items-center justify-center ${className}`}>
+          <img src="/images/googleplay.png" alt="Google Play" className="w-full h-full object-contain" />
+        </div>
+      );
+    case 'dana':
+      return <DanaLogo className={className} />;
+    case 'gopay':
+      return <GoPayLogo className={className} />;
+    case 'ovo':
+      return <OvoLogo className={className} />;
+    case 'shopeepay':
+      return <ShopeePayLogo className={className} />;
+    case 'bca':
+      return <BCALogo className={className} />;
+    case 'seabank':
+      return <SeaBankLogo className={className} />;
     default:
       return (
-        <div className={`rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-xs text-slate-300 font-bold uppercase ${className}`}>
+        <div className={`rounded-xl bg-gradient-to-br from-blue-900/60 to-slate-900 border border-slate-700/80 flex items-center justify-center text-[10px] text-cyan-300 font-black uppercase tracking-wider ${className}`}>
           {type?.slice(0, 3) || 'PRD'}
         </div>
       );
